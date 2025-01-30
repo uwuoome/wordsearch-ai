@@ -1,35 +1,31 @@
 import './style.css'
 import './board.css'
 import dict from './dict.js'
-import ai from './ai.js'
-import {tiles, letterValues} from './score.js'
+import {aiInit} from './ai/ai.js'
+import {tiles, letterValues} from './ai/score.js'
 import {run} from './simulate/run.js'
 
 const showLetterScore = true;
 const boardWidth = 15;
 const board = Array(boardWidth*boardWidth).fill(" ");
 
-/*
-  board[48] = "A";
-  board[63] = "X";
-  board[78] = "E";
- */
 async function init(){
   await dict.load();
-  ai.init(dict);
-
- // ai.play(board, "UM");
+  aiInit(dict.words(), {compress: true, debug: 1});
 }
 addEventListener("load", init);
 
 
 function render(board, boardWidth){
+  const isLowerCase = (ch) => ch >= 'a' && ch <= 'z';
   function cellClass(i){
-    if(board[i] != " ") return "cell letter";
+    if(board[i] != " "){
+      if(isLowerCase(board[i])) return "cell letter blank"; 
+      return "cell letter";
+    }
     const code = (tiles[i] == "★")? "DW": tiles[i];
     return ("cell "+code.toLowerCase()).trim();
   }
-  //  <div class="score">${letterValues[letter] || ""}</div>
   function cellDetails(i, letter){
     if(showLetterScore) return letterValues[letter] || "";
     return `${i % boardWidth},${Math.floor(i / boardWidth)}(${i})`;
@@ -37,7 +33,7 @@ function render(board, boardWidth){
   function renderCell(letter, i){
     return `
     <div class="${cellClass(i)}">
-      <div class="char">${letter}</div>
+      <div class="char">${letter.toUpperCase()}</div>
       <div class="num">${cellDetails(i, letter)}</div>
     </div>`;
   }

@@ -1,5 +1,5 @@
 import letterbag from './letterbag.js'
-import ai from '../ai.js'
+import {aiFindMove} from '../ai/ai.js'
 import {updateBoard, addScore, clearPlayerScores} from '../main.js'
 /** RUNS SIMULATION GAMES **/
 
@@ -47,7 +47,7 @@ function isGameOver(toPlace, lastTurnPassed){
 
 function takeTurn(board, lastTurnPassed){
   if(paused) return;
-  const toPlace = ai.play(board, players[playerNumber].letters.join(""));
+  const toPlace = aiFindMove(board, players[playerNumber].letters.join(""));
   if(isGameOver(toPlace, lastTurnPassed)) return endGame();
   console.log("Player", playerNumber+1, "plays", toPlace, "using", players[playerNumber].letters.join("")); 
   placeWord(board, toPlace, takeTurn);

@@ -1,12 +1,17 @@
-const base = "EEEEEEEEEEEEAAAAAAAAAIIIIIIIIIIOOOOOOOOONNNNNRRRRRSSSSSTTTTTLLLLUUUUDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ__";
+const base = "AAAAAAAAABBCCDDDDEEEEEEEEEEEEFFGGGHHIIIIIIIIIJKLLLLMMNNNNNNOOOOOOOOPPQRRRRRRSSSSTTTTTTUUUUVVWWXYYZ__";
 let bag = null;
 
-const shuffle = (arr) => arr.sort((a, b) => Math.random() < 0.5? -1: 1);
-function init(){
-  bag = shuffle( base.split("") );
-  console.log("Bag initialized", bag);
+function shuffle(array){ // fisher-yates
+  for(let i = array.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
+function init(){
+  bag = shuffle( base.split("") );
+}
 
 function removeFirstInstances(strArray, removeChars) {
   const isLowerCase = (ch) => ch >= 'a' && ch <= 'z';
@@ -22,7 +27,6 @@ function removeFirstInstances(strArray, removeChars) {
   return strArray;
 }
 
-// TODO: move the remove from hand code into the AI
 function draw(hand=[], toRemove=""){
   if(toRemove != ""){
     removeFirstInstances(hand, toRemove);
@@ -32,7 +36,7 @@ function draw(hand=[], toRemove=""){
     return shuffle("AEIOUDRS".split("")).pop();
   }
   const n = Math.min(bag.length, 7-hand.length);
-  const drawn = bag.splice(0, n)//.map(replaceBlanks);
+  const drawn = bag.splice(0, n);
   const r = [...drawn, ...hand];
   console.log("hand", hand, "replacing", toRemove, "new", r, "bag", bag.length);
   return r;

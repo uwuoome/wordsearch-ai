@@ -2,16 +2,50 @@ import {chunk, chunkByColumns, stepTimer} from './util.js'
 import DirectedAcyclicWordGraph from './dawg.js'
 import {calculateScore} from './score.js'
 
-let dawg = null;
-let letters = [];
+let dawg = null; 
+let opts = null;
 
-function init(dict, letterList){
+export function aiInit(wordList, options={compress: true, debug: 0}){
+  opts = options;
   const timer = stepTimer();
-  dawg = new DirectedAcyclicWordGraph(dict);
-  dawg.minimize();
-  console.log("DAWG built in", timer());
-  console.log(dawg.testCompression());
-  letters = letterList; 
+  dawg = new DirectedAcyclicWordGraph(wordList, debug);
+  if(opts.compress){
+    if(opts.debug){
+      console.log(dawg.testCompression()); 
+    }else{
+      dawg.minimize();
+    }
+  }
+  debug("DAWG built in", timer(), "millisecs");
+}
+
+export function aiFindMove(board, letters){
+  if(! (dawg && opts)) throw Error("AI Not initialized successfully with init method.");
+  const width = Math.sqrt(board.length);
+  if(Math.floor(width) != width) throw Error("Invalid board passed to AI play method.");
+  const attachPoints = findAttachPoints(board, width);
+  if(attachPoints.length === 0) return false;
+  const moves = {};
+  const lookup = createLookupTable(board, width);
+  
+  const start = Date.now();
+  attachPoints.forEach(p => {
+    const found = findMoves(lookup, p, letters);
+    p.found = found;
+  });
+ 
+  const result = bestResult(board, attachPoints);
+  if(opts.debug){
+    const nm = attachPoints.reduce((acc, cur) => acc + cur.found.length, 0);
+    console.log(nm, "dawg moves found in ", Date.now()-start, "millisecs");
+    console.log("highest scoring:", result);
+  }
+  return result;
+}
+
+function debug(){ 
+  if(! opts.debug) return; 
+  console.log.apply(null, arguments);
 }
 
 function findAttachPoints(board, width){
@@ -39,7 +73,6 @@ function findAttachPoints(board, width){
   }
   return result;
 }
-
 
 function createLookupTable(board, width){
   return {
@@ -77,55 +110,20 @@ function findMoves(lookup, point, letters, method){
   return result.flat();
 }
 
-function play(board, letters){
-  // TODO: if the board is empty straddle start
-  
-  const width = Math.sqrt(board.length);
-  if(Math.floor(width) != width) throw Error("Invalid board passed to ai play.");
-  const attachPoints = findAttachPoints(board, width);
-  //console.log("attach points found", attachPoints);
-  if(attachPoints.length === 0) return false;
-  const moves = {};
-  const lookup = createLookupTable(board, width);
-  
-  const start = Date.now();
-  attachPoints.forEach(p => {
-    const found = findMoves(lookup, p, letters);
-    p.found = found;
-  });
-  const nm = attachPoints.reduce((acc, cur) => acc + cur.found.length, 0);
-  //console.log("Best scoring", bestResult(board, attachPoints));
-  console.log(nm, "dawg moves found in ", Date.now()-start, "millisecs");
-  return bestResult(board, attachPoints);
-}
-
 function bestResult(board, attachPoints){
   const boardWidth = Math.sqrt(board.length);
-  //const placementCells = {};
   let best = {score: 0};
-  attachPoints.filter(ap => ap?.found.length).forEach(ap =>  {
+  attachPoints.filter(ap => ap?.found.length).forEach(ap => {
     const apX = ap.at % boardWidth;
     const apY = Math.floor(ap.at / boardWidth);
     ap.found.forEach(found => {
-      const pos = ap.dir == "a"? found.at+(apY*boardWidth): (found.at*boardWidth)+apX;
-      //if(! placementCells[pos]) placementCells[pos] = {"a": [], "d": []}; 
+      const pos = ap.dir == "a"? found.at+(apY*boardWidth): (found.at*boardWidth)+apX; 
       const score = calculateScore(board, boardWidth, pos, ap.dir, found.word, found.perp);
       if(score > best.score){
         best = {pos, dir: ap.dir, word: found.word, score};
-       // if(found.perp) console.log("New Best", best, "perpendicular", found.perp)
       }
-      //placementCells[pos][ap.dir].push({word: found.word, score});
     });
   });
-  console.log("Best result", best);
-  
   return best.score > 0? best: null;
-  //return placementCells;
 }
 
-
-const ai ={
-  init, play
-};
-
-export default ai;

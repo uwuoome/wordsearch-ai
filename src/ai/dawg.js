@@ -1,21 +1,20 @@
 /** 
  * This is a Trie, which can be compressed into a DAWG by calling the minimize method after instantiation.
- * While it compression did achieve an 87% node reduction rate on my wordlist. It does require additional preprocessing. 
+ * While the compression did achieve an 87% node reduction rate on my wordlist, it does require additional 
+ * preprocessing and doesn't speed up the search. 
  */
 export default class DirectedAcyclicWordGraph {
-  constructor(dict) {
+  constructor(allWords) {
     this.root = {};
-    const wordList = dict.words();
-    this.checkDictionary = dict.check; 
+    const wordList = allWords;
+    //this.checkDictionary = dict.check; 
     if(wordList?.length){
       wordList.forEach(word => {
         this.insert(word);
       });
-      console.log("DAWG built using", wordList.length, "words", this.root);
     }
   }
-
-  // Insert a word into the DAWG
+  
   insert(word) {
     let node = this.root;
     for (let char of word) {
@@ -26,6 +25,7 @@ export default class DirectedAcyclicWordGraph {
     }
     node["."] = 1; // Mark the end of the word
   }
+  
   _getNodeSignature(node) {
     const parts = [];
     const keys = Object.keys(node).sort();
@@ -44,7 +44,7 @@ export default class DirectedAcyclicWordGraph {
     this.nodesBySignature = new Map();
     let nextId = 0;
 
-    // Bottom-up processing
+    // bottom-up processing
     const processLevel = (depth, maxDepth) => {
       const levelNodes = new Map();
       const processNode = (node, path = '') => {
@@ -58,7 +58,6 @@ export default class DirectedAcyclicWordGraph {
           }
         }
       };
-
       processNode(this.root);
       
       for(const [path, node] of levelNodes){
@@ -88,10 +87,7 @@ export default class DirectedAcyclicWordGraph {
       }
       return maxDepth;
     };
-
     const maxDepth = getMaxDepth(this.root);
-    
-    // Process levels from bottom to top
     for(let depth = maxDepth; depth >= 0; depth--){
       processLevel(depth, maxDepth);
     }
@@ -125,7 +121,17 @@ export default class DirectedAcyclicWordGraph {
     };
   }
   
-  perpendicularWord(rowOffset, ch, at, slice){
+  wordExists(word){
+    const next = (node, chars) => {
+      if(chars.length == 0) return node["."];
+      const edge = chars.shift();
+      if(! node[edge]) return false;
+      return next(node[edge], chars);
+    }
+    return next(this.root, word.split(""));
+  }
+  
+  _perpendicularWord(rowOffset, ch, at, slice){
     const behind = (from) => {
       const at = from - 1;
       if(at < 0 || slice[at] == " ") return "";
@@ -139,10 +145,9 @@ export default class DirectedAcyclicWordGraph {
     const lettersBefore = behind(at);
     const word = lettersBefore + ch + ahead(at);
     const colOffset = 0-lettersBefore.length;
-    // get wordlist
-    if(word.length == 1) return true;                                 // OK, no perpendicular word
-    if(! this.checkDictionary(word.toUpperCase()) ) return false;     // Invalid perpendicular word
-    return {colOffset, rowOffset, word};                              // Valid perpendicular word
+    if(word.length == 1) return true;                            // OK, no perpendicular word
+    if(! this.wordExists(word.toUpperCase())) return false;      // Invalid perpendicular word 
+    return {colOffset, rowOffset, word};                         // Valid perpendicular word
   }
   
   /**
@@ -186,12 +191,9 @@ export default class DirectedAcyclicWordGraph {
         const fixedCounts = this._countLetters(fixedLettersFound);
         const formation = this._canFormWord(letterCounts, charCounts, prefixCounts, fixedCounts);
         if(formation){
-          let toAppend = char;
-          if(formation == 2){
-            toAppend = char.toLowerCase();
-          }
+          let toAppend = (formation == 2)? char.toLowerCase(): char;
           const newPrefix = prefix + toAppend;
-          const perpendicular = this.perpendicularWord(depth, toAppend, pointRow, perpRows[startIndex+depth]);
+          const perpendicular = this._perpendicularWord(depth, toAppend, pointRow, perpRows[startIndex+depth]);
           if(! perpendicular) return;
           const nextPWords = (typeof perpendicular == "object")? [...pWords, perpendicular]: pWords;// add to perpendicular words so far
           if(node[char]["."] != null){                                          // if this is a terminal node
@@ -225,11 +227,17 @@ export default class DirectedAcyclicWordGraph {
     return counts;
   }
   
-  // TODO: A bug lets wildcards be used twice.
-  // available is all letters in hand
-  // required is the single characters that's needed this time
-  // used is the prefix
-  // fixed are characters on the board
+  /**
+   * Checks to see if a word can be formed using letter counts of component parts provided.
+   * The available pool consists of the letters on rack and letters previously placed on board.
+   * The letters needed consist of the letters in current prefix and the current edge.  
+   * A current limitation is that only a single blank tile can be applied per word.
+   * @param available {object} counts of all letters on rack
+   * @param required {object} letter counts for current edge, in a trie this is a single character
+   * @param used {object} letter counts from the current prefix
+   * @param fixed {object} letter counts of existing letters on the board
+   * @return {number} 0 on failure; 1 found no wildcard used; 2 found with wildcard use.
+   */
   _canFormWord(available, required, used, fixed){
     const num = (val) => val || 0;
     let usedWildcard = false;

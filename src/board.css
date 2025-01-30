@@ -17,12 +17,17 @@
 }
 
 .cell.letter{
-   background: beige;
-   border: solid 2px #A98;
-   font-family: system-ui;
-   font-weight: bold;
-   font-size: 25px;
+  background: beige;
+  border: solid 2px #A98;
+  font-family: system-ui;
+  font-weight: bold;
+  font-size: 25px;
   border-radius: 2px;
+}
+
+.cell.letter.blank{
+  color: grey;
+  text-decoration: underline;
 }
 
 .num{

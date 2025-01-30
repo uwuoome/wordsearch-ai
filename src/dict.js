@@ -1,6 +1,5 @@
 let dictionary = null;
 
-
 async function load(){
   if(dictionary != null) return dict;
 
