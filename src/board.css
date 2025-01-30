@@ -1,0 +1,57 @@
+
+
+.board{
+  background: #gray;
+}
+.cell{
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border: solid 1px gray;
+  float: left;
+  text-align:left;
+  padding: 0;
+  user-select: none;
+  background: #EFEFEF;
+
+}
+
+.cell.letter{
+   background: beige;
+   border: solid 2px #A98;
+   font-family: system-ui;
+   font-weight: bold;
+   font-size: 25px;
+  border-radius: 2px;
+}
+
+.num{
+  font-size: 8px;
+  margin-left: 1px;
+  margin-top: 4px;
+  position: relative;
+  bottom: 0;
+  float:right;
+  margin-right: 4px;
+
+}
+.char{
+  margin-top: 0px;
+  text-align:center;
+  font-size: 20px;
+  height: 20px;  
+}
+
+
+.dw{
+  background: pink;
+}
+.tw{
+  background :red;
+}
+.dl{
+  background: cyan;
+}
+.tl{
+  background: blue;
+}
