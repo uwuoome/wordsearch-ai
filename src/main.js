@@ -1,20 +1,26 @@
 import './style.css'
 import './board.css'
 import dict from './dict.js'
-import {aiInit} from './ai/ai.js'
+import {aiInit, aiFindMove} from './ai/ai.js'
 import {tiles, letterValues} from './ai/score.js'
 import {run} from './simulate/run.js'
 
 const showLetterScore = true;
 const boardWidth = 15;
-const board = Array(boardWidth*boardWidth).fill(" ");
 
 async function init(){
   await dict.load();
-  aiInit(dict.words(), {compress: true, debug: 1});
+  aiInit(dict.words(), {skill: 1, priority: "length", compress: true, debug: 1});
 }
 addEventListener("load", init);
 
+
+function place(board, toPlace){
+  const inc = toPlace.dir == "a"? 1: 15;
+  toPlace.word.split("").forEach((ch, i) => {
+    board[toPlace.pos+(i*inc)] = ch;
+  });
+}
 
 function render(board, boardWidth){
   const isLowerCase = (ch) => ch >= 'a' && ch <= 'z';

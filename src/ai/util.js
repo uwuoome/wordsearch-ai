@@ -16,10 +16,11 @@ export function chunkByColumns(array, n) {
 
 export function stepTimer(){
   let lastTime = Date.now();
-  return () => {
+  return (msg=null) => {
     const thisTime = Date.now();
     const delta = thisTime - lastTime;
     lastTime = thisTime;
+    if(msg) console.log(msg, ":", delta, "ms");
     return delta;
   }
 }

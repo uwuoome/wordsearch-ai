@@ -4,9 +4,11 @@ import {calculateScore} from './score.js'
 
 let dawg = null; 
 let opts = null;
+const defaultOpts = {skill: 1.0, priority: 'score', compress: true, debug: 0};
 
-export function aiInit(wordList, options={compress: true, debug: 0}){
+export function aiInit(wordList, options=defaultOpts){
   opts = options;
+  opts.skill = Math.min(Math.max(parseFloat(opts.skill), 0), 1);
   const timer = stepTimer();
   dawg = new DirectedAcyclicWordGraph(wordList, debug);
   if(opts.compress){
@@ -19,7 +21,7 @@ export function aiInit(wordList, options={compress: true, debug: 0}){
   debug("DAWG built in", timer(), "millisecs");
 }
 
-export function aiFindMove(board, letters){
+export function aiFindMove(board, letters, overrides={}){
   if(! (dawg && opts)) throw Error("AI Not initialized successfully with init method.");
   const width = Math.sqrt(board.length);
   if(Math.floor(width) != width) throw Error("Invalid board passed to AI play method.");
@@ -34,7 +36,8 @@ export function aiFindMove(board, letters){
     p.found = found;
   });
  
-  const result = bestResult(board, attachPoints);
+  const result = bestResult(board, attachPoints, overrides);
+  
   if(opts.debug){
     const nm = attachPoints.reduce((acc, cur) => acc + cur.found.length, 0);
     console.log(nm, "dawg moves found in ", Date.now()-start, "millisecs");
@@ -110,20 +113,21 @@ function findMoves(lookup, point, letters, method){
   return result.flat();
 }
 
-function bestResult(board, attachPoints){
+function scoreAllResults(board, attachPoints, overrides){
   const boardWidth = Math.sqrt(board.length);
-  let best = {score: 0};
-  attachPoints.filter(ap => ap?.found.length).forEach(ap => {
+  return attachPoints.filter(ap => ap?.found.length).map(ap => {
     const apX = ap.at % boardWidth;
     const apY = Math.floor(ap.at / boardWidth);
-    ap.found.forEach(found => {
+    return ap.found.map(found => {
       const pos = ap.dir == "a"? found.at+(apY*boardWidth): (found.at*boardWidth)+apX; 
       const score = calculateScore(board, boardWidth, pos, ap.dir, found.word, found.perp);
-      if(score > best.score){
-        best = {pos, dir: ap.dir, word: found.word, score};
-      }
+      return {pos, dir: ap.dir, word: found.word, score};
     });
-  });
-  return best.score > 0? best: null;
+  }).flat();
 }
 
+function bestResult(board, attachPoints, overrides){
+  const result = scoreAllResults(board, attachPoints, overrides);
+  if(!result?.length) return null;
+  return result.reduce((acc, cur) => cur.score > acc.score? cur: acc, {score:0});
+}

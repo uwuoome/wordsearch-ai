@@ -7,7 +7,6 @@ export default class DirectedAcyclicWordGraph {
   constructor(allWords) {
     this.root = {};
     const wordList = allWords;
-    //this.checkDictionary = dict.check; 
     if(wordList?.length){
       wordList.forEach(word => {
         this.insert(word);
@@ -121,6 +120,7 @@ export default class DirectedAcyclicWordGraph {
     };
   }
   
+  // TODO: check this code
   wordExists(word){
     const next = (node, chars) => {
       if(chars.length == 0) return node["."];
@@ -145,6 +145,9 @@ export default class DirectedAcyclicWordGraph {
     const lettersBefore = behind(at);
     const word = lettersBefore + ch + ahead(at);
     const colOffset = 0-lettersBefore.length;
+    if(at == 14){
+      let sdk=1;
+    }
     if(word.length == 1) return true;                            // OK, no perpendicular word
     if(! this.wordExists(word.toUpperCase())) return false;      // Invalid perpendicular word 
     return {colOffset, rowOffset, word};                         // Valid perpendicular word
@@ -181,7 +184,7 @@ export default class DirectedAcyclicWordGraph {
         traverse(node[ch], prefix+ch, fixedLettersFound+ch, pWords);    // go to next letter
         return;
       }
-      
+    
       // Otherwise we need to check each letter we have left against our trie to see what our possibilities are
       for (let char in node) {
         if (char === ".") continue; // Skip the terminal marker
@@ -194,7 +197,7 @@ export default class DirectedAcyclicWordGraph {
           let toAppend = (formation == 2)? char.toLowerCase(): char;
           const newPrefix = prefix + toAppend;
           const perpendicular = this._perpendicularWord(depth, toAppend, pointRow, perpRows[startIndex+depth]);
-          if(! perpendicular) return;
+          if(! perpendicular) continue;
           const nextPWords = (typeof perpendicular == "object")? [...pWords, perpendicular]: pWords;// add to perpendicular words so far
           if(node[char]["."] != null){                                          // if this is a terminal node
             if(newPrefix.length >= minLength && newPrefix.length <= maxLength){ // if the word length is within bounds

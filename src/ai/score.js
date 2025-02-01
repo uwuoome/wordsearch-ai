@@ -46,6 +46,8 @@ export function calculateScore(board, width, at, dir, word, perp){
       return (letterValues[ch] || 0) * letterModifier(board, pos + (i*pinc));
     }).reduce(sum, 0) * wordMultiplier(board, p.word, pos, pinc);
   }).reduce(sum, 0);
-  return wordValue + pValue; 
+  const lettersUsed = word.split("").reduce((acc, cur, i) => acc + (board[at+i*inc] == " "? 1: 0), 0);  
+  const bonus = lettersUsed == 7? 50: 0;
+  return wordValue + pValue + bonus; 
 }
 

@@ -38,7 +38,7 @@ function draw(hand=[], toRemove=""){
   const n = Math.min(bag.length, 7-hand.length);
   const drawn = bag.splice(0, n);
   const r = [...drawn, ...hand];
-  console.log("hand", hand, "replacing", toRemove, "new", r, "bag", bag.length);
+  //console.log("hand", hand, "replacing", toRemove, "new", r, "bag", bag.length);
   return r;
 }
 
