@@ -98,7 +98,7 @@ button:focus-visible {
 }  
 
 #score0, #score1{
-  height: 85%;
+  height: 90%;
 }
 #score0 > div, #score1 > div{
   width: 182px;
@@ -129,6 +129,21 @@ button:focus-visible {
 }
 
 #buttons{
-  height: 10%;
+  margin-top: 10px
 }
 
+.skill{
+  background: #eee;
+  border-radius: 2px;
+  color: grey;
+  font-size: 12px;
+  margin: 0 4px;
+  display: flex;
+  align-items: center; 
+  gap: 8px;
+}
+.skill label{
+  margin-left: 8px;
+  padding-top: 0px;
+  font-weight: bold;
+}

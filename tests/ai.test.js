@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import {vi, expect, test } from 'vitest'
 import {aiInit, aiFindMove} from '../src/ai/ai.js'
 import {loadWordList} from './load-wordlist.js'
 
@@ -63,7 +63,6 @@ test('Parallel word placement', () => {
   const board = Array(225).fill(" ");
   place(board, {pos:112, dir: "a", word: "AGATE"});
   const result = aiFindMove(board, "OUGNIYI");
-  console.log(result);
   expect(result.pos).toBe(127);
   expect(result.dir).toBe("a");
   expect(result.word).toBe("YOGINI");
@@ -82,11 +81,42 @@ test('Multiple intersections', () => {
   expect(result.score).toBe(66);  
 });
 
-test.skip('Using a blank tile', () => {
-  expect(1).toBe(1)
+test('Using a blank tile', () => {
+  const board = Array(225).fill(" ");
+  place(board, {pos:135, dir: "a", word: "PASTA"});
+  const result = aiFindMove(board, "BSTIAN_");
+  expect(result.pos).toBe(154);
+  expect(result.dir).toBe("a");
+  expect(result.word).toBe("BASTINg");
+  expect(result.score).toBe(90);    
 });
 
-test.skip('Prioritizing word length over score', () => {
-  expect(1).toBe(1)
+test('Altered skill rating of 2', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.3);
+  const board = Array(225).fill(" ");
+  place(board, {pos:112, dir: "a", word: "ZETA"});
+  place(board, {pos:100, dir: "d", word: "TACKS"});
+  place(board, {pos:157, dir: "a", word: "MIASMA"}); 
+  const result = aiFindMove(board, "BLOOAEU", null, 2); 
+  expect(result.pos).toBe(125);
+  expect(result.dir).toBe("a");
+  expect(result.word).toBe("BAEL");
+  expect(result.score).toBe(22);  
+  vi.restoreAllMocks();
 });
+
+test('Altered skill rating of 0', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.3);
+  const board = Array(225).fill(" ");
+  place(board, {pos:112, dir: "a", word: "ZETA"});
+  place(board, {pos:100, dir: "d", word: "TACKS"});
+  place(board, {pos:157, dir: "a", word: "MIASMA"}); 
+  const result = aiFindMove(board, "BLOOAEU", null, 0); 
+  expect(result.pos).toBe(98);
+  expect(result.dir).toBe("a");
+  expect(result.word).toBe("AUTO");
+  expect(result.score).toBe(10);  
+  vi.restoreAllMocks();
+});
+
 

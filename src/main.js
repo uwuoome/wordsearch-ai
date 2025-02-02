@@ -3,17 +3,20 @@ import './board.css'
 import dict from './dict.js'
 import {aiInit, aiFindMove} from './ai/ai.js'
 import {tiles, letterValues} from './ai/score.js'
-import {run} from './simulate/run.js'
+import {run, changeSkill} from './simulate/run.js'
 
 const showLetterScore = true;
 const boardWidth = 15;
+const board = Array(boardWidth*boardWidth).fill(" ");
 
 async function init(){
   await dict.load();
-  aiInit(dict.words(), {skill: 1, priority: "length", compress: true, debug: 1});
+  aiInit(dict.words(), {skill: 5, priority: "length", compress: true, debug: 0});
+  document.getElementById("p0skill").addEventListener("change", changeSkill.bind(null, 0));
+  document.getElementById("p1skill").addEventListener("change", changeSkill.bind(null, 1));  
+  
 }
 addEventListener("load", init);
-
 
 function place(board, toPlace){
   const inc = toPlace.dir == "a"? 1: 15;

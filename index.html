@@ -11,16 +11,27 @@
       <div id="left">
         <div id="player0">Player 1</div>
         <div id="score0"></div>
-        <div id="buttons">
-          <button id="run">Simulate</button>
+        <div class="skill">
+          <label for="p0skill">Skill: </label> 
+          <input type="range" id="p0skill" name="p0skill" min="0" max="5" value="5" />
         </div>
       </div>
       <div id="main"></div>
       <div id="right">
         <div id="player1">Player 2</div>
         <div id="score1"></div>
+        <div class="skill">
+          <label for="p1skill">Skill:</label> 
+          <input type="range" id="p1skill" name="p1skill" min="0" max="5" value="5" />
+        </div>
+        
       <div>
+      
+      <div id="buttons">
+        <button id="run">Simulate</button>
+      </div>
     </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

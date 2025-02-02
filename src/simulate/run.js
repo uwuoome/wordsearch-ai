@@ -8,6 +8,10 @@ const players = [{}, {}];
 let paused = false;
 let playerNumber = 0; // active player
 
+export function changeSkill(pn, event){
+  players[pn].skill = parseInt(event.target.value);
+}  
+
 // change update letters and score for player
 function score(playerNumber, toPlace){
   const p = players[playerNumber];
@@ -47,9 +51,10 @@ function isGameOver(toPlace, lastTurnPassed){
 
 function takeTurn(board, lastTurnPassed){
   if(paused) return;
-  const toPlace = aiFindMove(board, players[playerNumber].letters.join(""));
+  const player = players[playerNumber];
+  const toPlace = aiFindMove(board, player.letters.join(""), null, player.skill);
   if(isGameOver(toPlace, lastTurnPassed)) return endGame();
-  console.log("Player", playerNumber+1, "plays", toPlace, "using", players[playerNumber].letters.join("")); 
+  console.log("Player", playerNumber+1, "plays", toPlace, "using", player.letters.join("")); 
   placeWord(board, toPlace, takeTurn);
 }
 
@@ -65,7 +70,7 @@ function restart(board, button){
   letterbag.init();
   players[0].score = 0; 
   players[0].letters = letterbag.draw();
-  players[1].score = 0; 
+  players[1].score = 0;
   players[1].letters = letterbag.draw();
   playerNumber = 0;
   takeTurn(board, false); 

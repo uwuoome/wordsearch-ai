@@ -4,11 +4,21 @@ import {calculateScore} from './score.js'
 
 let dawg = null; 
 let opts = null;
-const defaultOpts = {skill: 1.0, priority: 'score', compress: true, debug: 0};
+const defaultOpts = {skill:5, compress: true, debug: 0};
 
-export function aiInit(wordList, options=defaultOpts){
-  opts = options;
-  opts.skill = Math.min(Math.max(parseFloat(opts.skill), 0), 1);
+const constrain = (low, high, value) => Math.max(Math.min(parseInt(value, 10), high), low); 
+const from0to5 = constrain.bind(null, 0, 5);
+const aiSkill = (override) => from0to5(override != null? override: opts.skill);
+
+/**
+ * Initializes the AI with a given word list and configuration options.
+ * 
+ * @param {Array} wordList - The list of words the AI will use. Note: Must be in Upper Case.
+ * @param {Object} options - Configuration settings for the AI.
+ */
+export function aiInit(wordList, options={}){
+  opts = {...defaultOpts, ...options};
+  opts.skill = from0to5(opts.skill);
   const timer = stepTimer();
   dawg = new DirectedAcyclicWordGraph(wordList, debug);
   if(opts.compress){
@@ -21,7 +31,19 @@ export function aiInit(wordList, options=defaultOpts){
   debug("DAWG built in", timer(), "millisecs");
 }
 
-export function aiFindMove(board, letters, overrides={}){
+/**
+ * Finds the best move for the AI in a word game, based on it's skill level.
+ * 
+ * @param {Array} board - The current board state as a 1D array. Represented by uppercase letters, 
+          lower case letters (for blanks), and spaces.
+ * @param {Array} letters - The letters available for the AI to use.
+ * @param {Array|null} opLetters - (Optional) Letters the opponent has. In the end game this can 
+          be infered from board and rack, and used to min-max.
+ * @param {number|null} skillOverride - (Optional) A value between 0 and 5 for adjusting skill.
+
+ * @returns {Object|null} - An appropriate move based on skill level, or null if none found.
+ */
+export function aiFindMove(board, letters, opLetters=null, skillOverride=null){
   if(! (dawg && opts)) throw Error("AI Not initialized successfully with init method.");
   const width = Math.sqrt(board.length);
   if(Math.floor(width) != width) throw Error("Invalid board passed to AI play method.");
@@ -36,7 +58,7 @@ export function aiFindMove(board, letters, overrides={}){
     p.found = found;
   });
  
-  const result = bestResult(board, attachPoints, overrides);
+  const result = selectMove(scoreAllResults(board, attachPoints), skillOverride);
   
   if(opts.debug){
     const nm = attachPoints.reduce((acc, cur) => acc + cur.found.length, 0);
@@ -45,6 +67,7 @@ export function aiFindMove(board, letters, overrides={}){
   }
   return result;
 }
+
 
 function debug(){ 
   if(! opts.debug) return; 
@@ -113,7 +136,7 @@ function findMoves(lookup, point, letters, method){
   return result.flat();
 }
 
-function scoreAllResults(board, attachPoints, overrides){
+function scoreAllResults(board, attachPoints){
   const boardWidth = Math.sqrt(board.length);
   return attachPoints.filter(ap => ap?.found.length).map(ap => {
     const apX = ap.at % boardWidth;
@@ -126,8 +149,14 @@ function scoreAllResults(board, attachPoints, overrides){
   }).flat();
 }
 
-function bestResult(board, attachPoints, overrides){
-  const result = scoreAllResults(board, attachPoints, overrides);
-  if(!result?.length) return null;
-  return result.reduce((acc, cur) => cur.score > acc.score? cur: acc, {score:0});
+function selectMove(moves, skillOverride){
+  if(!moves?.length) return null; 
+  const skill = aiSkill(skillOverride);
+  if(skill >= 5){ // return best word
+    return moves.reduce((acc, cur) => cur.score > acc.score? cur: acc, {score:0});
+  }
+  const trendTowards = [10, 15, 20, 24, 28];
+  const targetScore = trendTowards[skill] + Math.floor(Math.random() * ((skill+1)*3));
+  // find a move that's closest to the target score
+  return moves.reduce((acc, cur) => Math.abs(targetScore-cur.score) < Math.abs(targetScore-acc.score)? cur: acc, {score:0});
 }
