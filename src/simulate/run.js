@@ -49,10 +49,15 @@ function isGameOver(toPlace, lastTurnPassed){
   return false;
 }
 
+function endGameLetters(){
+  if(letterbag.remaining() == 0) return players[playerNumber^1].letters;
+  return null;
+}
+
 function takeTurn(board, lastTurnPassed){
   if(paused) return;
   const player = players[playerNumber];
-  const toPlace = aiFindMove(board, player.letters.join(""), null, player.skill);
+  const toPlace = aiFindMove(board, player.letters.join(""), endGameLetters(), player.skill);
   if(isGameOver(toPlace, lastTurnPassed)) return endGame();
   console.log("Player", playerNumber+1, "plays", toPlace, "using", player.letters.join("")); 
   placeWord(board, toPlace, takeTurn);

@@ -51,3 +51,7 @@ export function calculateScore(board, width, at, dir, word, perp){
   return wordValue + pValue + bonus; 
 }
 
+export function scoreRemaining(letters){
+  const sumScore = (acc, cur) => acc +  (letterValues[cur] || 0)
+  return letters.split("").reduce(sumScore, 0);
+}

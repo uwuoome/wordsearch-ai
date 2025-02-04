@@ -24,3 +24,11 @@ export function stepTimer(){
     return delta;
   }
 }
+
+export function place(board, toPlace){
+  const inc = toPlace.dir == "a"? 1: 15;
+  toPlace.word.split("").forEach((ch, i) => {
+    board[toPlace.pos+(i*inc)] = ch;
+  });
+  return board;
+}

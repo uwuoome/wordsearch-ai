@@ -92,7 +92,7 @@ test('Using a blank tile', () => {
 });
 
 test('Altered skill rating of 2', () => {
-  vi.spyOn(Math, 'random').mockReturnValue(0.3);
+  vi.spyOn(Math, 'random').mockReturnValue(0.3); // need to mock random for skill levels below 5
   const board = Array(225).fill(" ");
   place(board, {pos:112, dir: "a", word: "ZETA"});
   place(board, {pos:100, dir: "d", word: "TACKS"});
@@ -105,8 +105,8 @@ test('Altered skill rating of 2', () => {
   vi.restoreAllMocks();
 });
 
-test('Altered skill rating of 0', () => {
-  vi.spyOn(Math, 'random').mockReturnValue(0.3);
+test('Altered skill rating of 0', () => { 
+  vi.spyOn(Math, 'random').mockReturnValue(0.3); 
   const board = Array(225).fill(" ");
   place(board, {pos:112, dir: "a", word: "ZETA"});
   place(board, {pos:100, dir: "d", word: "TACKS"});
@@ -119,4 +119,31 @@ test('Altered skill rating of 0', () => {
   vi.restoreAllMocks();
 });
 
+test('End game minmax 1', () => {
+  const board = "       TINTIESt M   ZEE     U  ATONALLY    G  MASU  E     A PA  NATTERY  R OK   WIRE    I OU     O     E D  WAGON     R   C DOX HINT    JOL VOCEs       QINS L       FEUD   E       R I    V       A S    E       B      R       ".split("");
+  const result = aiFindMove(board, "FHIGDAP", "IEB", 6);
+  // scores: HAAF - (VIBE + (IGDP * 2))
+  expect(result.pos).toBe(56);
+  expect(result.dir).toBe("a");
+  expect(result.word).toBe("HAAF");
+  expect(result.score).toBe(28);   
+  expect(result.delta).toBe(-10);   
+});
 
+test('End game minmax 2', () => {  
+  const board = Array(225).fill(" ");
+  place(board, {pos:112, dir: "a", word: "ZETA"});
+  const result = aiFindMove(board, "MAUVEGA", "XRUBN", 6);
+  expect(result.pos).toBe(98);
+  expect(result.dir).toBe("a");
+  expect(result.word).toBe("MAA");
+  expect(result.score).toBe(19);   
+  expect(result.delta).toBe(-15);  
+  
+  const result2 = aiFindMove(board, "MAUVEGA", "RUBN", 6);
+  expect(result2.pos).toBe(126);
+  expect(result2.dir).toBe("a");
+  expect(result2.word).toBe("GAMA");
+  expect(result2.score).toBe(32);   
+  expect(result2.delta).toBe(-3);  
+});

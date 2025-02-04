@@ -31,14 +31,9 @@ function draw(hand=[], toRemove=""){
   if(toRemove != ""){
     removeFirstInstances(hand, toRemove);
   }
-  const replaceBlanks = (ch) =>{ // 
-    if(ch != "_") return ch;
-    return shuffle("AEIOUDRS".split("")).pop();
-  }
   const n = Math.min(bag.length, 7-hand.length);
   const drawn = bag.splice(0, n);
   const r = [...drawn, ...hand];
-  //console.log("hand", hand, "replacing", toRemove, "new", r, "bag", bag.length);
   return r;
 }
 
@@ -50,6 +45,7 @@ function change(hand=[]){
 const letterbag = {
   init,
   draw,
-  change
+  change,
+  remaining: () => bag.length
 };
 export default letterbag;
