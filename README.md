@@ -1,2 +1,2 @@
-A Scrabble-like AI library. <a href="https://wordsearch-ai.pages.dev/">Example Here</a>.
+A Scrabble-like AI library. <a href="https://main.wordsearch-ai.pages.dev/">Example Here</a>.
 
