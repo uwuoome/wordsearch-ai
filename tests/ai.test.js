@@ -1,5 +1,5 @@
 import {vi, expect, test } from 'vitest'
-import {aiInit, aiFindMove} from '../src/ai/ai.js'
+import {aiInit, aiFindMove, aiSetTiles} from '../src/ai/ai.js'
 import {loadWordList} from './load-wordlist.js'
 
 const wordlist = await loadWordList('./public/dictionary2019.txt')
@@ -146,4 +146,26 @@ test('End game minmax 2', () => {
   expect(result2.word).toBe("GAMA");
   expect(result2.score).toBe(32);   
   expect(result2.delta).toBe(-3);  
+});
+
+test('Custom Tileset', () => {
+  const board = Array(25).fill(" ");
+  const tiles = Array(25).fill(" ");
+  tiles[12] = "★";
+  tiles[13] = "DL";
+  tiles[20] = "TW";
+  aiSetTiles(tiles);
+  // forming horizontal word without overflow
+  const result = aiFindMove(board, "MEVGUAR", null, 5); 
+  expect(result.pos).toBe(10);
+  expect(result.dir).toBe("a");
+  expect(result.word).toBe("MAUVE");
+  expect(result.score).toBe(28);  
+  place(board, {pos:10, dir: "a", word: "MAUVE"});
+  // forming vertical word without overflow
+  const result2 = aiFindMove(board, "DEONS", null, 5); 
+  expect(result2.pos).toBe(0);
+  expect(result2.dir).toBe("d");
+  expect(result2.word).toBe("DEMON");
+  expect(result2.score).toBe(24);  
 });

@@ -87,8 +87,44 @@ button:focus-visible {
 
 #app{
   display: grid;
+  grid-template-rows: auto auto;
   grid-template-columns: auto auto auto;
   padding: 10px;
+}
+nav{
+  grid-column: 1 / span 2;
+  text-align: left;
+  background: #DDD;
+  padding: 12px;
+}
+nav > h4{
+  margin: 0; 
+  padding: 0;
+  line-height: 1.5;
+  float:left;
+  margin-right: 20px;
+}
+nav > a{
+ margin-right: 20px; 
+}
+#buttons{
+  grid-row: 1;
+  grid-column: 3;  
+  background: #DDD;
+  height:100%;
+}
+#left{
+  grid-row: 2;
+  grid-column:  1;
+}
+
+#main{
+  grid-row: 2 ;
+  grid-column: 2;
+}
+#right{
+  grid-row: 2;
+  grid-column: 3;
 }
 
 #left, #right{
@@ -96,6 +132,7 @@ button:focus-visible {
   border: solid 2px gray;
   background: #161;
 }  
+
 
 #score0, #score1{
   height: 90%;
@@ -128,8 +165,8 @@ button:focus-visible {
     animation: fadeBackground 1s infinite alternate;
 }
 
-#buttons{
-  margin-top: 10px
+#links{
+  margin-top: 10px;
 }
 
 .skill{
@@ -146,4 +183,8 @@ button:focus-visible {
   margin-left: 8px;
   padding-top: 0px;
   font-weight: bold;
+}
+
+#run{
+  margin-top: 2px;
 }

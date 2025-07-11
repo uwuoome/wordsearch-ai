@@ -1,0 +1,365 @@
+<html>
+<head>
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+@font-face {
+  font-family: 'Rubik';
+  src: url('/fonts/Rubik-VariableFont_wght.ttf') format('ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+body{
+  margin: 0; padding: 0;
+  text-align:center;
+  background-image: linear-gradient(#FFE, #DFD);
+}
+p, a {
+  font-family:  'Rubik', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+h1, h2, h3, h4{
+  font-family:  Rubik;
+  color: #000088;
+}
+
+td, pre, code{
+  font-family: monospace;
+}
+ 
+
+table{
+  border-top: 1px solid gray; 
+  border-left: 1px solid gray; 
+  border-right: 1px solid gray; 
+}
+
+td{
+  border-bottom: 1px solid gray;
+  padding: 4px;
+}
+
+td:not(:last-child){
+  border-right: 1px solid #CCC;
+}
+.game{
+  float:right;
+  border: 1px solid #CCC;
+  padding: 8px;
+  margin-left: 8px;
+}
+.smallbox{
+  float:left; 
+  margin-right: 8px; 
+  margin-bottom: 8px; 
+  padding: 8px; 
+  border: 1px solid #CCC; 
+}
+nav{
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #CCC;
+  border-left: 1px solid #CCC;
+  border-right: 1px solid #CCC;
+  background: white;
+}
+.content{
+  padding: 8px;
+  max-width: 1000px;
+  text-align: left;
+  margin: 0 auto;
+  background: white;
+  border-left: solid 1px #CCC;
+  border-right: solid 1px #CCC;
+}
+@media(width > 800px){
+  table{
+   margin-right:20px;
+  }
+}
+
+.figure{
+  float:right; 
+  border: 1px solid #CCC; 
+  padding: 10px;
+  margin-left: 10px;
+}
+.figure .caption{
+  font-family: verdana;
+  font-size: 10px;
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/">Simulation</a>
+  <a href="about.html">About</a>
+  <a href="progress.html">Progress</a>
+</nav>
+<div class="content">
+<h1>Making a Scrabble AI.</h1>
+<h2>Attach Points</h2>
+<p>Attach points are tiles from which you can begin forming a word on the board. The first attach point is the start tile and from thereon attachpoints are any 
+tile adjacent to a previously placed letter. For each attach point the algorithm then needs to find all possible words. So our first step is finding all attach points.</p>
+</p>
+<h2>Checking For Word Existence</h2>
+<p>
+  The next step involves searching for the existence of all words that can be formed in a dictionary or vocabulary.
+
+  When I first started programming in C, I made an anagram finder to solve scrabble by generating all permutations of characters available 
+  then looking for words in a dictionary stored in array using a binary search. While this worked, it was very inefficient and wouldn't 
+  scale well for long strings. 
+  
+  At the time a radix tree was suggested as a better method, so this is where I begain. 
+</p>
+
+
+<h4>Tries, Radix Trees and Directed Acyclic Word Graphs</h4>
+<div class="figure" style="width: 200px;">
+  <span class="caption">DAWG containing the words LAD, LADDER, LAND, LANDER, LANE, LESS and LESSER.</span>
+    <pre style="margin-bottom:0">
+    L+-A+-D+-.
+     |  |  |
+     |  |  +-D----+
+     |  |         |
+     |  +-N+-D+---E--R
+     |     |  |   |
+     |     |  +-. |
+     |     |      |
+     |     +-E    |
+     |            |
+     +-E--S--S+---+
+              |
+              +-.</pre>
+</div>
+<div class="figure" style="width: 200px;">
+  <span class="caption">Trie containing the words LAD, LADDER, LAND, LANDER, LANE, LESS and LESSER.</span>
+    <pre style="margin-bottom:0">
+    L+-A+-D+-.
+     |  |  |
+     |  |  +-D--E--R
+     |  |
+     |  +-N+-D+-.
+     |     |  |
+     |     |  +--E--R
+     |     |
+     |     +-E
+     |
+     +-E--S--S+-.
+              |
+              +--E--R</pre>
+</div>
+
+
+<p>
+  The fastest way to lookup word existence in a combination of letters is to step through a tree structure, built from all the words in
+  the dictionary. Each node in the tree represents a character or prefix in a valid word. 
+  The benefit is basically preventing the investigation of any character sequence with an invalid prefix when compared to searching 
+  through every permutation. 
+</p>
+
+
+<p>
+  The simplest of these structures is a Trie: A tree structure where each node represents a letter. 
+  I started by using A Radix Tree, which is a compressed trie where nodes are strings containing shared prefixes. 
+  It seemed appealing at first as it would afford fewer node traversals and be nicer to step through in a debugger. 
+  That approach became complicated when I wanted to check for interesections against board letters and find perpendicular words, 
+  at which point a went with a Trie.
+</p>
+
+<p>
+  Later I found an article linked to a paper about a fast scrabble algorithm that used a 
+  <a href="https://www.cs.cmu.edu/afs/cs/academic/class/15451-s06/www/lectures/scrabble.pdf">DAWG</a>, 
+  which is a Trie compressed to merge shared suffixes. While this would save a large proportion of the memory required, 
+  it does require some precalc and doesn't speed up the search itself. I added DAWG compression as an option to the 
+  <code>aiInit</code> method.
+</p> 
+
+
+<h4>Finding All Words</h4> 
+<p>For each attach point, I start at the beginning of the row and find all words that extend up to and beyond the attach point, while traversing the tiles the algorithm explores outwards 
+<p>While moving through possible word suffixes letter by letter, we can check for and validate perpendicular words as we go.</p>
+
+<h2>Adding Variable AI Skill Levels</h2>
+<p>The average bot score was around 408, not as good as a pro but much better than myself and most other players. 
+  For accessibility, skill levels were added between 0 to 5, where skill levels below 5 tend to select words closer to a specified value. 
+  The valid word list is large and many of the words the AI produces are obscure. 
+  They are also often short, producing words on both axes, that lead to clogged up boards. 
+  A more human-like approach to lower difficulty levels is to provide limited vocabulary lists. 
+  Using an 8000 word vocabulary, produces more natural looking words at lower challenge levels, that lead to more open and enjoyable game states.   
+</p>
+
+<h2>MinMax in the End Game</h2>
+<p>
+  One further optimisation is to minmax the end game when the letter bag is empty and an opponent's letters can be inferred.
+  I added a basic implementatation that looks one turn ahead and attempt to get out first or prevent the opponent getting out of scoring
+  high value words.
+</p>
+
+<p>Running 1000 game with the minmax player going first, the mimmax player had a winrate of 56.9%.
+This looks promising, but the player going first does have an advantage. So let's compare this to 1000 games where neither player is minmaxing: </p>
+<table cellspacing="0" style="float:left;">
+  <thead>
+    <tr>
+      <td>Player</td>
+      <td>Skill</td>
+      <td>Wins</td>
+      <td>Win %</td>
+      <td>Mean Score</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>6 (Minmaxing)</td>
+      <td>568</td>
+      <td>57%</td>
+      <td>415</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>5 (Non minmax)</td>
+      <td>429</td>
+      <td>43%</td>
+      <td>400</td>
+    </tr>
+  </tbody>
+</table>
+
+<table cellspacing="0"style="float:left">
+  <thead>
+    <tr>
+      <td>Player</td>
+      <td>Skill</td>
+      <td>Wins</td>
+      <td>Win %</td>
+      <td>Mean Score</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>5 (Non minmax)</td>
+      <td>553</td>
+      <td>55.5%</td>
+      <td>418</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>5 (Non minmax)</td>
+      <td>444</td>
+      <td>44.5%</td>
+      <td>407</td>
+    </tr>
+  </tbody>
+</table>
+<p style="clear:both">
+A 1.5% difference in performance is better than nothing, but perhaps inconclusive as a positive result due to variance. 
+Mainmax is said to mainly benefit the player going second, so let's look at that next.
+</p>
+
+<p>Running 1000 games with the minmax player going second, the minmax player had a 47.7% winrate. Compared against 1000 games at top serach skill and neither minmaxing, the second player had a winrate of 43.9%</p>
+
+<table cellspacing="0" style="float:left;">
+  <thead>
+    <tr>
+      <td>Player</td>
+      <td>Skill</td>
+      <td>Wins</td>
+      <td>Win %</td>
+      <td>Mean Score</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>5 (Non minmax)</td>
+      <td>521</td>
+      <td>52.3%</td>
+      <td>411</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>6 (Minmaxing)</td>
+      <td>475</td>
+      <td>47.7%</td>
+      <td>403</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<table cellspacing="0" style="float:left">
+  <thead>
+    <tr>
+      <td>Player</td>
+      <td>Skill</td>
+      <td>Wins</td>
+      <td>Win %</td>
+      <td>Mean Score</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>5 (Non minmax)</td>
+      <td>558</td>
+      <td>56.1%</td>
+      <td>417</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>5 (Non minmax)</td>
+      <td>438</td>
+      <td>43.9%</td>
+      <td>403</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="clear:both">This gave the minmaxing player an additional 3.8% in winrate before accounting for variance. Giving the minmaxing player going second a slight boost.</p>
+<pre class="game">
+              Y             L
+        L     O             O
+  G U A I A C O L           O
+        V     F             T
+        I   C             Q I
+        D Z O     K O R   I N
+          E W   J E R I D   G
+      P R E H E A T   F E W S
+    R       E   B A N   P A
+I N H A L E R S       M U D
+T U I N A   B       O U T E D
+A T M A     S T       X I
+    e         I         E
+          E R Y N G O E S
+              N
+Game 63. Scores: P1: 681 P2: 378
+</pre>
+<h2>Retaining Value</h2>
+<p>When playing Scrabble, A player wants to consider what letters they will be left with after playing a word as some letters have greater potential than
+others. For example: The letter X is easy to get high scoring words with, even by itself, as there are many short 2 letters words that can be formed using it.
+Given the options between scoring 30 points using an X from the rack, or scoring 28 using lower scoring letters from the rack, there is more equity in retaining
+the X, unless in the end game where you don't want to be stuck with it in hand. Likewise, the letter S is highly desirable as it forms a single character suffix
+on many words which in turn can form a letter in a transposed word.</p> 
+<p>
+<div style="clear:left">
+  <code class="smallbox">Z = 5, X = 5, Q = 3, S = 3, R = 2, D = 2, Y = 1 &nbsp; </code>
+  <p>A first pass with letter retention values above tested for 1000 games averaged 57.5% winrate playing first. Too insignificant to differentiate from variance.</p>
+</div>
+<div style="clear:left">
+  <code class="smallbox">Z = 10, X = 8, Q = 10, S = 5, R = 3, D = 3, Y = 2</code>
+  <p>A second attempt exerting a stronger influence had a negative effect averaging 52% winrate over 1000 games.</p>
+</div>
+<div style="clear:left">
+  <code class="smallbox">Z = 3, X = 3, Q = 1, S = 2, R = 1, D = 1, Y = 0 &nbsp;</code>
+  <p>Playing with a smaller modifier seemed to have a better effect on winrate 58.5%. After another 1000 runs the average was 57.5%. It seemed that the benefitial 
+  phase of retaining letters may not be right up until the end game. So code was modified to apply retention modifiers while less thans 60 letters are on teh board. First test run after that was back at 58.5%. Currently from the results it's not entirely clear that letter retention helps, but theoretically a tiny modifier should push towards favouring value on board over value in the rack.</p>
+</div>
+
+</div>
+</body>
+</html>

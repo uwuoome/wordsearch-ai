@@ -3,7 +3,7 @@ export const letterValues = {
   N: 1, O: 1, P: 3, Q: 10, R: 1, S: 1, T: 1, U: 1, V: 4, W: 4, X: 8, Y: 4, Z: 10
 };
 
-export const tiles = [
+const tiles = [
   "TW", "  ", "  ", "DL", "  ", "  ", "  ", "TW", "  ", "  ", "  ", "DL", "  ", "  ", "TW", 
   "  ", "DW", "  ", "  ", "  ", "TL", "  ", "  ", "  ", "TL", "  ", "  ", "  ", "DW", "  ",
   "  ", "  ", "DW", "  ", "  ", "  ", "DL", "  ", "DL", "  ", "  ", "  ", "DW", "  ", "  ",
@@ -21,7 +21,24 @@ export const tiles = [
   "TW", "  ", "  ", "DL", "  ", "  ", "  ", "TW", "  ", "  ", "  ", "DL", "  ", "  ", "TW" 
 ];
 
+let customTiles = null;
+export function getTiles(){
+  return customTiles || tiles;
+}
+export function setCustomTiles(custom){
+  if(custom == null){
+    customTiles = null;
+    return;
+  }
+  if(! Array.isArray(custom) ) throw new Error("Custom tiles must be an array");
+  const width = Math.sqrt(custom.length);
+  if(Math.floor(width) != width) throw new Error("Custom tiles must represent a square grid");
+  if(width < 5 || width > 50) throw new Error("Custom tiles grid width not between 5 and 5"); 
+  customTiles = custom;
+}
+
 export function calculateScore(board, width, at, dir, word, perp){
+  const tiles = getTiles();
   const [inc, pinc] = dir == "a"? [1, width]: [width, 1];
   function letterModifier(board, at){
     if(board[at] != " ") return 1;

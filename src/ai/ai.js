@@ -1,6 +1,6 @@
 import {chunk, chunkByColumns, stepTimer, place} from './util.js'
 import DirectedAcyclicWordGraph from './dawg.js'
-import {calculateScore, scoreRemaining} from './score.js'
+import {calculateScore, scoreRemaining, setCustomTiles} from './score.js'
 
 let dawg = null; 
 let opts = null;
@@ -31,6 +31,10 @@ export function aiInit(wordList, options={}){
   debug("DAWG built in", timer(), "millisecs");
 }
 
+export function aiSetTiles(tiles){
+  setCustomTiles(tiles);
+}
+
 /**
  * Finds the best move for the AI in a word game, based on it's skill level.
  * 
@@ -58,8 +62,10 @@ export function aiFindMove(board, letters, opLetters=null, skillOverride=null, a
     const found = findMoves(lookup, p, letters);
     p.found = found;
   });
- 
-  const scoredMoves = scoreAllResults(board, attachPoints);
+  
+  // having opLetters signifies endgame currently and we don't want to retain letters then
+  const usingLetterRetention =  aiSkill(skillOverride) > 5 && opLetters == null; 
+  const scoredMoves = scoreAllResults(board, attachPoints, usingLetterRetention);
   if(allMoves){
     return scoredMoves;
   }
@@ -72,7 +78,6 @@ export function aiFindMove(board, letters, opLetters=null, skillOverride=null, a
   }
   return result;
 }
-
 
 function debug(){ 
   if(! opts.debug) return; 
@@ -141,7 +146,7 @@ function findMoves(lookup, point, letters, method){
   return result.flat();
 }
 
-function scoreAllResults(board, attachPoints){
+function scoreAllResults(board, attachPoints, retainLetters=false){
   const boardWidth = Math.sqrt(board.length);
   return attachPoints.filter(ap => ap?.found.length).map(ap => {
     const apX = ap.at % boardWidth;
@@ -149,24 +154,33 @@ function scoreAllResults(board, attachPoints){
     return ap.found.map(found => {
       const pos = ap.dir == "a"? found.at+(apY*boardWidth): (found.at*boardWidth)+apX; 
       const score = calculateScore(board, boardWidth, pos, ap.dir, found.word, found.perp);
+      if(retainLetters){
+        const retention = retentionValue(found.word);
+        return {pos, dir: ap.dir, word: found.word, score, retention};
+      }
       return {pos, dir: ap.dir, word: found.word, score};
     });
   });
 }
 
-const topScoring = (acc, cur) => cur.score > acc.score? cur: acc;
+const topScoring = (acc, cur) => cur.score> acc.score? cur: acc;
 
 function selectMove(board, moves, letters, opLetters, skillOverride){
   if(!moves?.length) return null; 
   const skill = aiSkill(skillOverride);
   if(skill >= 5){ // return best word
-    if(skill > 5 && opLetters){ // at end game with opponent's letters inferred
-      const finishingMove = findFinishingMove(board, moves, letters);
-      if(finishingMove){
-        console.log("Getting out with", finishingMove.score, "Opponent letters", opLetters);
-        return finishingMove; // this assumes getting out is best which may not be the case
+    if(skill > 5){
+      if(opLetters){ // at end game with opponent's letters inferred
+        const finishingMove = findFinishingMove(board, moves, letters);
+        if(finishingMove){
+          return finishingMove; // this assumes getting out is best which may not be the case
+        }
+        return minMax(board, moves, letters, opLetters);
+      }else{
+        const retentionScoring = (acc, cur) => (cur.score-(cur.retention||0) > acc.score-(acc.retention||0))? cur: acc;
+        const boardLetterCount = board.reduce((acc, cur) => cur == " "? acc: acc+1, 0);
+        return moves.flat().reduce(boardLetterCount <= 60? retentionScoring: topScoring, {score:0});
       }
-      return minMax(board, moves, letters, opLetters);
     }
     return moves.flat().reduce(topScoring, {score:0});
   }
@@ -225,4 +239,17 @@ function minMax(board, moves, letters, opLetters){
   }
   
   return topDelta;
+}
+
+// returns an approximation of how much value is lost by using the letter from the rack before the end game
+function retentionValue(word){
+  const  values = {
+    "Z": 3, // high scoring and easy to place
+    "X": 3, // ditto
+    "Q": 1,
+    "S": 2, // single char suffix 
+    "R": 1, // ditto, but less common
+    "D": 1
+  };
+  return word.split("").reduce((acc, cur) => acc + (values[cur] || 0), 0);
 }

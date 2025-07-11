@@ -1,6 +1,7 @@
 import letterbag from './letterbag.js'
 import {aiFindMove} from '../ai/ai.js'
-import {updateBoard, addScore, clearPlayerScores} from '../main.js'
+import {scoreRemaining} from '../ai/score.js'
+import {updateBoard, addScore, clearPlayerScores, addGameOutScore} from '../main.js'
 /** RUNS SIMULATION GAMES **/
 
 const STEP_TIME = 100;
@@ -34,6 +35,10 @@ function placeWord(board, toPlace, nextTurn){
     if(word.length == 0){
       score(playerNumber, toPlace);
       clearInterval(interval);
+      const player = players[playerNumber];
+      if(letterbag.remaining() == 0 && player.letters.length == 0){
+        return endGame(true);
+      }
       playerNumber ^= 1;
       return nextTurn(board, false);
     }
@@ -50,21 +55,27 @@ function isGameOver(toPlace, lastTurnPassed){
 }
 
 function endGameLetters(){
-  if(letterbag.remaining() == 0) return players[playerNumber^1].letters;
-  return null;
+  if(letterbag.remaining() > 0) return null; // not end game
+  return players[playerNumber^1].letters;
 }
 
 function takeTurn(board, lastTurnPassed){
   if(paused) return;
   const player = players[playerNumber];
   const toPlace = aiFindMove(board, player.letters.join(""), endGameLetters(), player.skill);
-  if(isGameOver(toPlace, lastTurnPassed)) return endGame();
+  if(lastTurnPassed && toPlace == null) return endGame(false);
   console.log("Player", playerNumber+1, "plays", toPlace, "using", player.letters.join("")); 
   placeWord(board, toPlace, takeTurn);
 }
 
-function endGame(){
-  document.getElementById("run").innerText = "Restart";
+function endGame(playerOut=true){
+  document.getElementById("run").innerText = "Restart"; 
+  if(! playerOut) return;
+  const remainingLetters = players[playerNumber ^ 1].letters;
+  const score = scoreRemaining(remainingLetters.join(""));
+  players[playerNumber].score += score;
+  players[playerNumber ^ 1].score -= score;
+  addGameOutScore(remainingLetters, score, playerNumber, players[playerNumber].score, players[playerNumber^1].score);
 }
 
 function restart(board, button){

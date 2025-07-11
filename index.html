@@ -4,10 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Literant AI Demo</title>
   </head>
   <body>
+
     <div id="app">
+      <nav>
+        <h4>Wordsearch AI</h4>
+        <a href="about.html">About</a>
+        <a href="progress.html">Log</a>
+        <label for="limitvocab" style="float:right">Limited Vocab
+          <input type="checkbox" id="limitvocab" name="limitvocab" />
+        </label>
+      </nav>
+      <div id="buttons">
+        <button id="run">Run Simululation</button>
+      </div>
       <div id="left">
         <div id="player0">Player 1</div>
         <div id="score0"></div>
@@ -24,12 +36,7 @@
           <label for="p1skill">Skill:</label> 
           <input type="range" id="p1skill" name="p1skill" min="0" max="6" value="5" />
         </div>
-        
-      <div>
-      
-      <div id="buttons">
-        <button id="run">Simulate</button>
-      </div>
+      <div>        
     </div>
 
     <script type="module" src="/src/main.js"></script>
